@@ -1,0 +1,1538 @@
+openapi: 3.0.3
+info:
+  title: Swagger Cinema - OpenAPI 3.0
+  description: |-
+    This is an API for Cinema application.
+  version: 1.0.1
+tags:
+  - name: film
+    description: Everything about films
+  - name: schedule
+    description: Manage schedule of the cinema
+  - name: user
+    description: Operations about user
+  - name: session
+    description: Operations with sessions
+  - name: tag
+    description: Operations with tags
+  - name: room
+    description: Operations with rooms
+  - name: ticket
+    description: Operations with tickets
+paths:
+  /film:
+    put:
+      tags:
+        - film
+      summary: Update an existing film
+      description: Update an existing film by Id
+      operationId: updateFilm
+      requestBody:
+        description: Update an existent film in the cinema
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Film'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Film'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Film'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Film'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Film'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Film not found
+        '405':
+          description: Validation exception
+      security:
+        - cinema_auth:
+            - admin
+    post:
+      tags:
+        - film
+      summary: Add a new film to the cinema
+      description: Add a new film to the cinema
+      operationId: addFilm
+      requestBody:
+        description: Create a new film in the cinema
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Film'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Film'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Film'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Film'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Film'
+        '405':
+          description: Invalid input
+      security:
+        - cinema_auth:
+            - admin
+  /film/findByStatus:
+    get:
+      tags:
+        - film
+      summary: Finds Films by status
+      description: Multiple status values can be provided with comma separated strings
+      operationId: findFilmsByStatus
+      parameters:
+        - name: status
+          in: query
+          description: Status values that need to be considered for filter
+          required: false
+          explode: true
+          schema:
+            type: string
+            default: in rent
+            enum:
+              - incoming
+              - in rent
+              - out of date
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Film'          
+            application/xml:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Film'
+                xml:
+                  name: films_array
+        '400':
+          description: Invalid status value
+      security:
+        - cinema_auth:
+            - admin
+            - manager
+  /film/findByTags:
+    get:
+      tags:
+        - film
+      summary: Finds Fils by tags
+      description: Multiple tags can be provided with comma separated strings.
+      operationId: findFilmsByTags
+      parameters:
+        - name: tags
+          in: query
+          description: Tags to filter by
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Film'          
+            application/xml:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Film'
+                xml:
+                  name: films_array
+        '400':
+          description: Invalid tag value
+      security:
+        - cinema_auth:
+          - admin
+          - manager
+  /film/{filmId}:
+    get:
+      tags:
+        - film
+      summary: Find film by ID
+      description: Returns a single film
+      operationId: getFilmById
+      parameters:
+        - name: filmId
+          in: path
+          description: ID of film to return
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Film'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Film'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Film not found
+      security:
+        - api_key: []
+        - cinema_auth:
+            - admin
+            - manager
+    post:
+      tags:
+        - film
+      summary: Updates a film in the cinema with form data
+      description: ''
+      operationId: updateFilmWithForm
+      parameters:
+        - name: filmId
+          in: path
+          description: ID of film that needs to be updated
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: name
+          in: query
+          description: Name of film 
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Status of film
+          schema:
+            type: string
+      responses:
+        '405':
+          description: Invalid input
+      security:
+        - cinema_auth:
+            - admin
+    delete:
+      tags:
+        - film
+      summary: Deletes a film
+      description: delete a film
+      operationId: deleteFilm
+      parameters:
+        - name: api_key
+          in: header
+          description: ''
+          required: false
+          schema:
+            type: string
+        - name: filmId
+          in: path
+          description: Film id to delete
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '400':
+          description: Invalid film value
+      security:
+        - cinema_auth:
+            - admin
+  
+  /user:
+    post:
+      tags:
+        - user
+      summary: Create user
+      description: This can only be done by the logged in user.
+      operationId: createUser
+      requestBody:
+        description: Created user object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        default:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/User'
+      security:
+        - cinema_auth:
+          - admin
+          - manager
+          - customer
+  /user/createWithList:
+    post:
+      tags:
+        - user
+      summary: Creates list of users with given input array
+      description: Creates list of users with given input array
+      operationId: createUsersWithListInput
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/User'
+        default:
+          description: successful operation
+      security:
+        - cinema_auth:
+          - admin
+          - manager
+          - customer
+  /user/login:
+    get:
+      tags:
+        - user
+      summary: Logs user into the system
+      description: ''
+      operationId: loginUser
+      parameters:
+        - name: username
+          in: query
+          description: The user name for login
+          required: false
+          schema:
+            type: string
+        - name: password
+          in: query
+          description: The password for login in clear text
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          headers:
+            X-Rate-Limit:
+              description: calls per hour allowed by the user
+              schema:
+                type: integer
+                format: int32
+            X-Expires-After:
+              description: date in UTC when token expires
+              schema:
+                type: string
+                format: date-time
+          content:
+            application/xml:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: string
+        '400':
+          description: Invalid username/password supplied
+      security:
+        - cinema_auth:
+          - admin
+          - manager
+          - customer
+  /user/logout:
+    get:
+      tags:
+        - user
+      summary: Logs out current logged in user session
+      description: ''
+      operationId: logoutUser
+      parameters: []
+      responses:
+        default:
+          description: successful operation
+  /user/{username}:
+    get:
+      tags:
+        - user
+      summary: Get user by user name
+      description: ''
+      operationId: getUserByName
+      parameters:
+        - name: username
+          in: path
+          description: 'The name that needs to be fetched.'
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid username supplied
+        '404':
+          description: User not found
+      security:
+        - cinema_auth:
+          - admin
+          - manager
+          - customer
+    put:
+      tags:
+        - user
+      summary: Update user
+      description: This can only be done by the logged in user.
+      operationId: updateUser
+      parameters:
+        - name: username
+          in: path
+          description: name that need to be deleted
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Update an existent user in the cinema
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        default:
+          description: successful operation
+      security:
+        - cinema_auth:
+          - admin
+          - manager
+          - customer
+    delete:
+      tags:
+        - user
+      summary: Delete user
+      description: This can only be done by the logged in user.
+      operationId: deleteUser
+      parameters:
+        - name: username
+          in: path
+          description: The name that needs to be deleted
+          required: true
+          schema:
+            type: string
+      responses:
+        '400':
+          description: Invalid username supplied
+        '404':
+          description: User not found
+      security:
+        - cinema_auth:
+          - admin
+          - manager
+          - customer
+  /user/tickets:
+    get:
+      tags:
+        - user
+      summary: Get tickets of logged in user 
+      description: 'Return tickets that logged in user owns'
+      operationId: getTicketsByName
+      parameters: []
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ticket'          
+            application/xml:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ticket'
+                xml:
+                  name: tickets_array
+        '400':
+          description: User is not logged in
+        '404':
+          description: Tickets not found
+      security:
+        - cinema_auth:
+          - admin
+          - manager
+          - customer
+  /user/sell:
+    post:
+      tags:
+        - user
+      summary: Sell ticket for user as a manager or admin 
+      description: 'Return ticket sold'
+      operationId: sellTicketForUser
+      parameters: 
+        - name: username
+          in: query
+          description: The user name for ticket
+          required: true
+          schema:
+            type: string
+        - name: sessionId
+          in: query
+          description: The session for ticket
+          required: true
+          schema:
+            type: integer
+        - name: seatNumber
+          in: query
+          description: The seat number for ticket
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ticket'          
+            application/xml:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ticket'
+        '405':
+          description: Invalid input
+      security:
+        - cinema_auth:
+          - admin
+          - manager
+          
+  /tag:
+    put:
+      tags:
+        - tag
+      summary: Update an existing tag
+      description: Update an existing tag by Id
+      operationId: updateTag
+      requestBody:
+        description: Update an existent tag in the cinema
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tag'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Tag'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Tag'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Tag not found
+        '405':
+          description: Validation exception
+      security:
+        - cinema_auth:
+            - admin
+    post:
+      tags:
+        - tag
+      summary: Add a new tag to the cinema
+      description: Add a new tag to the cinema
+      operationId: addTag
+      requestBody:
+        description: Create a new tag in the cinema
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tag'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Tag'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Tag'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '405':
+          description: Invalid input
+      security:
+        - cinema_auth:
+            - admin
+  /tag/{tagId}:
+    get:
+      tags:
+        - tag
+      summary: Find tag by ID
+      description: Returns a single tag
+      operationId: getTagById
+      parameters:
+        - name: tagId
+          in: path
+          description: ID of tag to return
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Tag not found
+      security:
+        - api_key: []
+        - cinema_auth:
+            - admin
+            - manager
+    post:
+      tags:
+        - tag
+      summary: Updates a tag in the cinema with form data
+      description: ''
+      operationId: updateTagWithForm
+      parameters:
+        - name: tagId
+          in: path
+          description: ID of tag that needs to be updated
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: name
+          in: query
+          description: Name of tag 
+          schema:
+            type: string
+      responses:
+        '405':
+          description: Invalid input
+      security:
+        - cinema_auth:
+            - admin
+    delete:
+      tags:
+        - tag
+      summary: Deletes a tag
+      description: delete a tag
+      operationId: deleteTag
+      parameters:
+        - name: api_key
+          in: header
+          description: ''
+          required: false
+          schema:
+            type: string
+        - name: tagId
+          in: path
+          description: Tag id to delete
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '400':
+          description: Invalid tag id
+      security:
+        - cinema_auth:
+            - admin
+            
+  /room:
+    put:
+      tags:
+        - room
+      summary: Update an existing room
+      description: Update an existing room by Id
+      operationId: updateRoom
+      requestBody:
+        description: Update an existent room in the cinema
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Room'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Room'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Room'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Room not found
+        '405':
+          description: Validation exception
+      security:
+        - cinema_auth:
+            - admin
+    post:
+      tags:
+        - room
+      summary: Add a new room to the cinema
+      description: Add a new room to the cinema
+      operationId: addRoom
+      requestBody:
+        description: Create a new room in the cinema
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Room'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Room'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Room'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '405':
+          description: Invalid input
+      security:
+        - cinema_auth:
+            - admin
+  /room/{roomId}:
+    get:
+      tags:
+        - room
+      summary: Find room by ID
+      description: Returns a single room
+      operationId: getRoomById
+      parameters:
+        - name: roomId
+          in: path
+          description: ID of room to return
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Room not found
+      security:
+        - api_key: []
+        - cinema_auth:
+            - admin
+            - manager
+    post:
+      tags:
+        - room
+      summary: Updates a room in the cinema with form data
+      description: ''
+      operationId: updateRoomWithForm
+      parameters:
+        - name: roomId
+          in: path
+          description: ID of room that needs to be updated
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: name
+          in: query
+          description: Name of room that needs to be updated
+          schema:
+            type: string
+        - name: numOfSeats
+          in: query
+          description: Number of seats in the room that needs to be updated
+          schema:
+            type: string
+      responses:
+        '405':
+          description: Invalid input
+      security:
+        - cinema_auth:
+            - admin
+    delete:
+      tags:
+        - room
+      summary: Deletes a room
+      description: delete a room
+      operationId: deleteRoom
+      parameters:
+        - name: api_key
+          in: header
+          description: ''
+          required: false
+          schema:
+            type: string
+        - name: roomId
+          in: path
+          description: Room id to delete
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '400':
+          description: Invalid room id
+      security:
+        - cinema_auth:
+            - admin
+
+  /ticket/{ticketId}:
+    delete:
+      tags:
+        - ticket
+      summary: Deletes a ticket
+      description: delete a ticket
+      operationId: deleteTicket
+      parameters:
+        - name: api_key
+          in: header
+          description: ''
+          required: false
+          schema:
+            type: string
+        - name: ticketId
+          in: path
+          description: Ticket id to delete
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '400':
+          description: Invalid ticket id
+      security:
+        - cinema_auth:
+            - admin
+
+  /schedule/:
+    post:
+      tags:
+        - schedule
+      summary: Create schedule
+      description: This can only be done by admin.
+      operationId: createSchedule
+      requestBody:
+        description: Created schedule object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Schedule'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Schedule'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Schedule'
+      responses:
+        default:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+      security:
+        - cinema_auth:
+          - admin
+  /schedule/{date}:
+    get:
+      tags:
+        - schedule
+      summary: Get schedule for date 
+      description: 'Return schedule for thr certain date'
+      operationId: getScheduleByDate
+      parameters:
+        - name: date
+          in: path
+          description: 'The date that schedule is needed for.'
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Schedule'          
+            application/xml:
+              schema:
+                  $ref: '#/components/schemas/Schedule'
+        '400':
+          description: Invalid date
+        '403':
+          description: No permission
+        '404':
+          description: Schedule not found
+      security:
+        - cinema_auth:
+          - admin
+          - manager
+          - customer
+    put:
+      tags:
+        - schedule
+      summary: Update schedule
+      description: This can only be done by admin.
+      operationId: updateSchedule
+      parameters:
+        - name: date
+          in: path
+          description: 'The date of a schedule.'
+          required: true
+          schema:
+            type: string
+            format: date
+      requestBody:
+        description: Update an existent schedule in the cinema
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Schedule'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Schedule'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Schedule'
+      responses:
+        default:
+          description: successful operation
+      security:
+        - cinema_auth:
+          - admin
+    delete:
+      tags:
+        - schedule
+      summary: Delete schedule
+      description: This can only be done by admin.
+      operationId: deleteSchedule
+      parameters:
+        - name: date
+          in: path
+          description: 'The date of a schedule.'
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '400':
+          description: Invalid date supplied
+        '404':
+          description: Schedule not found
+      security:
+        - cinema_auth:
+          - admin
+  /schedule/{date}/tickets:
+    get:
+      tags:
+        - schedule
+      summary: Get tickets for date 
+      description: 'Return tickets for the certain date'
+      operationId: getTicketsByDate
+      parameters:
+        - name: date
+          in: path
+          description: 'The date that tickets are needed for.'
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ticket'          
+            application/xml:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ticket'
+                xml:
+                  name: tickets_array
+        '400':
+          description: Invalid date
+        '403':
+          description: No permission
+        '404':
+          description: Tickets not found
+      security:
+        - cinema_auth:
+          - admin
+          - manager
+  
+  /session:
+    put:
+      tags:
+        - session
+      summary: Update an existing session
+      description: Update an existing session by Id
+      operationId: updateSession
+      requestBody:
+        description: Update an existent session in the cinema
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Session'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Session'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Session'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Session not found
+        '405':
+          description: Validation exception
+      security:
+        - cinema_auth:
+            - admin
+            - manager
+    post:
+      tags:
+        - session
+      summary: Add a new session to the cinema
+      description: Add a new session to the cinema
+      operationId: addSession
+      requestBody:
+        description: Create a new session in the cinema
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Session'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Session'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Session'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '405':
+          description: Invalid input
+      security:
+        - cinema_auth:
+            - admin
+  /session/{sessionId}:
+    get:
+      tags:
+        - session
+      summary: Find session by ID
+      description: Returns a single session
+      operationId: getSessionById
+      parameters:
+        - name: sessionId
+          in: path
+          description: ID of session to return
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Session not found
+      security:
+        - api_key: []
+        - cinema_auth:
+            - admin
+            - manager
+    post:
+      tags:
+        - session
+      summary: Updates a session in the cinema with form data
+      description: ''
+      operationId: updateSessionWithForm
+      parameters:
+        - name: sessionId
+          in: path
+          description: ID of session that needs to be updated
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: startTime
+          in: query
+          description: Start time of session 
+          schema:
+            type: string
+            format: time
+        - name: filmId
+          in: query
+          description: ID of film of session 
+          schema:
+            type: integer
+            format: int64
+        - name: roomId
+          in: query
+          description: ID of room of session 
+          schema:
+            type: integer
+            format: int64
+        - name: pricePerTicket
+          in: query
+          description: Price of the ticket for session 
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '405':
+          description: Invalid input
+      security:
+        - cinema_auth:
+            - admin
+    delete:
+      tags:
+        - session
+      summary: Deletes a session
+      description: delete a session
+      operationId: deleteSession
+      parameters:
+        - name: api_key
+          in: header
+          description: ''
+          required: false
+          schema:
+            type: string
+        - name: sessionId
+          in: path
+          description: Room id to delete
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '400':
+          description: Invalid session id
+      security:
+        - cinema_auth:
+            - admin
+  /session/tickets/{sessionId},{date}:
+    get:
+      tags:
+        - session
+      summary: Get tickets for session and date 
+      description: 'Return tickets for the certain session and date'
+      operationId: getTicketsBySessionDate
+      parameters:
+        - name: sessionId
+          in: path
+          description: 'The id of the session tickets are needed for.'
+          required: true
+          schema:
+            type: integer
+        - name: date
+          in: path
+          description: 'The date that tickets are needed for.'
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ticket'          
+            application/xml:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ticket'
+                xml:
+                  name: tickets_array
+        '400':
+          description: Invalid date or id of the session
+        '403':
+          description: No permission
+        '404':
+          description: Tickets not found
+      security:
+        - cinema_auth:
+          - admin
+          - manager
+  
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 10
+        username:
+          type: string
+          example: theUser
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: James
+        email:
+          type: string
+          example: john@email.com
+        password:
+          type: string
+          example: '12345'
+        phone:
+          type: string
+          example: '12345'
+        userStatus:
+          type: integer
+          description: User Status
+          format: int32
+          example: 1
+      xml:
+        name: user
+        
+    Tag:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: Action
+      xml:
+        name: tag
+        
+    Film:
+      required:
+        - id
+        - name
+        - duration
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 10
+        name:
+          type: string
+          example: Harry Potter
+        tags:
+          type: array
+          xml:
+            wrapped: true
+          items:
+            $ref: '#/components/schemas/Tag'
+        duration:
+          type: integer
+          description: duration of film in minuties
+          example: 90
+        status:
+          type: string
+          description: film status in cinema
+          enum:
+            - incoming
+            - in rent
+            - out of date
+      xml:
+        name: film
+        
+    Session:
+      required:
+        - id
+        - filmId
+        - roomId
+        - startTime
+        - pricePerTicket
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 2
+        startTime:
+          type: string
+          format: time
+          example: 1:30
+        filmId:
+          type: integer
+          format: int64
+          example: 22
+        roomId:
+          type: integer
+          format: int64
+          example: 13
+        pricePerTicket:
+          type: number
+          format: decimal
+          example: 13.5
+      xml:
+        name: session
+        
+    Room:
+      required:
+        - id
+        - name
+        - numOfSeats
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 2
+        name:
+          type: string
+          example: 'Room #5'
+        numOfSeats:
+          type: integer
+          format: int64
+          example: 22
+      xml:
+        name: room
+    
+    Schedule:
+      required:
+        - id
+        - date
+        - session
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 2
+        date:
+          type: string
+          format: date
+          example: '2020-12-24'
+        session:
+          type: array
+          xml:
+            wrapped: true
+          items:
+            $ref: '#/components/schemas/Session'
+      xml:
+        name: schedule
+        
+    Ticket:
+      required:
+        - id
+        - userId
+        - sessionId
+        - seatNum
+        - date
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 2
+        userId:
+          type: integer
+          format: int64
+          example: 8
+        sessionId:
+          type: integer
+          format: int64
+          example: 334
+        seatNum:
+          type: integer
+          format: int64
+          example: 32
+        date:
+          type: string
+          format: date
+          example: 2021-08-24
+      xml:
+        name: ticket
+    
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        type:
+          type: string
+        message:
+          type: string
+      xml:
+        name: '##default'
+        
+  requestBodies:
+    Film:
+      description: Film object that needs to be added to the cinema
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Film'
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/Film'
+    SessionArray:
+      description: List of session object
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Session'
+  securitySchemes:
+    cinema_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: url
+          scopes:
+            admin : can do all actions
+            manager : can sell tickets
+            user : can see schedule, change own profile and see info about tickets he/she owns 
+    api_key:
+      type: apiKey
+      name: api_key
+      in: header
