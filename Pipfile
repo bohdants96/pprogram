@@ -6,6 +6,9 @@ name = "pypi"
 [packages]
 flask = "*"
 waitress = "*"
+sqlalchemy = "*"
+psycopg2-binary = "*"
+alembic = "*"
 
 [dev-packages]
 
