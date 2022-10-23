@@ -2,7 +2,6 @@ import os
 from sqlalchemy import *
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
-#DB_URI = os.getenv("DB_URI")
 engine = create_engine("postgresql://postgres:postgres22@localhost:5432/cinema")
 
 Session = sessionmaker(bind=engine)
@@ -84,4 +83,3 @@ class Tickets(BaseModel):
     date = Column(DateTime, server_default=func.now())
     UserToWatch = relationship(Users, foreign_keys=[userId], backref="userWatch", lazy="joined")
     SessionTicket = relationship(Sessions, foreign_keys=[sessionId], backref="sessionT", lazy="joined")
-BaseModel.metadata.create_all(engine)
