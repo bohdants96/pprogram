@@ -1,8 +1,8 @@
-"""add models
+"""'models'
 
-Revision ID: c43d98a00d58
+Revision ID: d755164d8050
 Revises: 
-Create Date: 2022-10-23 17:01:39.484683
+Create Date: 2022-11-06 16:02:46.449746
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'c43d98a00d58'
+revision = 'd755164d8050'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -54,10 +54,12 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('FilmsTags',
+    sa.Column('id', sa.Integer(), sa.Identity(always=False, start=1, cycle=False), nullable=False),
     sa.Column('filmId', sa.Integer(), nullable=True),
     sa.Column('tagId', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['filmId'], ['films.id'], ),
-    sa.ForeignKeyConstraint(['tagId'], ['tags.id'], )
+    sa.ForeignKeyConstraint(['tagId'], ['tags.id'], ),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('sessions',
     sa.Column('id', sa.Integer(), sa.Identity(always=False, start=1, cycle=False), nullable=False),
@@ -70,11 +72,12 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('ScheduleSession',
-    sa.Column('scheduleId', sa.Integer(), nullable=False),
-    sa.Column('sessionId', sa.Integer(), nullable=False),
+    sa.Column('id', sa.Integer(), sa.Identity(always=False, start=1, cycle=False), nullable=False),
+    sa.Column('scheduleId', sa.Integer(), nullable=True),
+    sa.Column('sessionId', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['scheduleId'], ['schedules.id'], ),
     sa.ForeignKeyConstraint(['sessionId'], ['sessions.id'], ),
-    sa.PrimaryKeyConstraint('scheduleId', 'sessionId')
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('tickets',
     sa.Column('id', sa.Integer(), sa.Identity(always=False, start=1, cycle=False), nullable=False),

@@ -2,22 +2,37 @@ import os
 from sqlalchemy import *
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
-engine = create_engine("postgresql://postgres:postgres22@localhost:5432/cinema")
+engine = create_engine("postgresql://postgres:p30062003@localhost:5432/cinema")
 
 Session = sessionmaker(bind=engine)
 BaseModel = declarative_base()
 
-FilmTag = Table('FilmsTags',
-    BaseModel.metadata,
-    Column('filmId', Integer, ForeignKey('films.id')),
-    Column('tagId', Integer, ForeignKey('tags.id'))
-)
+#FilmTag = Table('FilmsTags',
+ #               BaseModel.metadata,
+  #              Column('filmId', Integer, ForeignKey('films.id')),
+   #             Column('tagId', Integer, ForeignKey('tags.id'))
+#            )
 
-schedule_session = Table('ScheduleSession',
-    BaseModel.metadata,
-    Column('scheduleId', Integer, ForeignKey('schedules.id'), primary_key=True),
-    Column('sessionId', Integer, ForeignKey('sessions.id'), primary_key=True)
-)
+#schedule_session = Table('ScheduleSession',
+ #                        BaseModel.metadata,
+  #                       Column('scheduleId', Integer, ForeignKey('schedules.id'), primary_key=True),
+   #                      Column('sessionId', Integer, ForeignKey('sessions.id'), primary_key=True)
+    #                     )
+
+
+class FilmTag(BaseModel):
+    __tablename__ = "FilmsTags"
+    id = Column(Integer, Identity(start=1, cycle=False), primary_key=True)
+    filmId = Column(Integer, ForeignKey('films.id'))
+    tagId = Column(Integer, ForeignKey('tags.id'))
+
+
+class schedule_session(BaseModel):
+    __tablename__ = "ScheduleSession"
+    id = Column(Integer, Identity(start=1, cycle=False), primary_key=True)
+    scheduleId = Column(Integer, ForeignKey('schedules.id'))
+    sessionId = Column(Integer, ForeignKey('sessions.id'))
+
 
 class Users(BaseModel):
     __tablename__ = "users"
@@ -30,6 +45,7 @@ class Users(BaseModel):
     password = Column(String)
     phone = Column(String)
     userStatus = Column(Integer)
+
 
 class Rooms(BaseModel):
     __tablename__ = "rooms"
@@ -45,6 +61,7 @@ class Tags(BaseModel):
     id = Column(Integer, Identity(start=1, cycle=False), primary_key=True)
     name = Column(String)
 
+
 class Films(BaseModel):
     __tablename__ = "films"
 
@@ -53,7 +70,7 @@ class Films(BaseModel):
     duration = Column(Integer)
     status = Column(String)
     CheckConstraint(status.in_(['incoming', 'in rent', 'out of date']))
-    tags = relationship(Tags, secondary=FilmTag, backref='movies')
+
 
 class Sessions(BaseModel):
     __tablename__ = "sessions"
@@ -66,12 +83,13 @@ class Sessions(BaseModel):
     filmToWatch = relationship(Films, foreign_keys=[filmId], backref="id_film", lazy="joined")
     FilmRoom = relationship(Rooms, foreign_keys=[roomId], backref="id_room", lazy="joined")
 
+
 class Schedules(BaseModel):
     __tablename__ = "schedules"
 
     id = Column(Integer, Identity(start=1, cycle=False), primary_key=True)
     date = Column(Date)
-    sessionsWatch = relationship(Sessions, secondary=schedule_session, backref="schedule")
+
 
 class Tickets(BaseModel):
     __tablename__ = "tickets"

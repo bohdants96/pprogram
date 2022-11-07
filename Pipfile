@@ -9,6 +9,8 @@ waitress = "*"
 sqlalchemy = "*"
 psycopg2-binary = "*"
 alembic = "*"
+marshmallow = "*"
+flask-bcrypt = "*"
 
 [dev-packages]
 
