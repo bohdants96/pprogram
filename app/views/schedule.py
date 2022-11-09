@@ -181,9 +181,10 @@ def get_schedule_date(date):
     return jsonify(res_json), 200
 
 
+# to rewrite
 @schedule_blueprint.route('/tickets/<string:date>', methods=['GET'])
 def get_tickets_session(date):
-    schedule = db.session.query(Schedules).filter(date==date).first()
+    schedule = db.session.query(Schedules).filter(Schedules.date==date).first()
     if schedule is None:
         return jsonify({'error': 'Schedule not found'}), 404
     res_j = []
