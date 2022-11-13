@@ -1,18 +1,25 @@
 from flask import Blueprint, jsonify, request
 from marshmallow import Schema, fields, ValidationError, validate
 from flask_bcrypt import Bcrypt
-from pprogram.models import Sessions, Tickets, Films, Rooms
-import pprogram.app.db as db
+from models import Sessions, Tickets, Films, Rooms
+from sqlalchemy import and_, exc
+import app.db as db
+from app.auth import check_admin_auth, check_manager_or_admin_auth
+from flask_jwt_extended import jwt_required
 
 session_blueprint = Blueprint('session', __name__, url_prefix='/session')
 bcrypt = Bcrypt()
 
 
 @session_blueprint.route('', methods=['POST'])
+@jwt_required
 def create_session():
+    res = check_admin_auth()
+    if res is not None:
+        return res
     try:
         class SessionToCreate(Schema):
-            startTime = fields.DateTime(required=True)
+            startTime = fields.Time(required=True)
             filmId = fields.Integer(required=True)
             roomId = fields.Integer(required=True)
             pricePerTicket = fields.Integer(required=True)
@@ -41,13 +48,18 @@ def create_session():
 
 
 @session_blueprint.route('/<int:session_id>', methods=['GET'])
+@jwt_required
 def get_session(session_id):
+    res = check_manager_or_admin_auth()
+    if res is not None:
+        return res
+
     session = db.session.query(Sessions).filter_by(id=session_id).first()
     if session is None:
         return jsonify({'error': 'Session not found'}), 404
 
     res_json = {'id': session.id,
-                'startTime': session.startTime,
+                'startTime': str(session.startTime),
                 'filmId': session.filmId,
                 'roomId': session.roomId,
                 'pricePerTicket': session.pricePerTicket
@@ -57,10 +69,14 @@ def get_session(session_id):
 
 
 @session_blueprint.route('/<int:session_id>', methods=['PUT'])
+@jwt_required
 def update_session(session_id):
+    res = check_admin_auth()
+    if res is not None:
+        return res
     try:
         class SessionToUpdate(Schema):
-            startTime = fields.DateTime()
+            startTime = fields.Time()
             filmId = fields.Integer()
             roomId = fields.Integer()
             pricePerTicket = fields.Integer()
@@ -101,7 +117,11 @@ def update_session(session_id):
 
 
 @session_blueprint.route('/<int:session_id>', methods=['DELETE'])
+@jwt_required
 def delete_session(session_id):
+    res = check_admin_auth()
+    if res is not None:
+        return res
     session = db.session.query(Sessions).filter_by(id=session_id).first()
     if session is None:
         return jsonify({'error': 'Session not found'}), 404
@@ -117,11 +137,18 @@ def delete_session(session_id):
     return "", 204
 
 
+# rewrite need sessionId and date
 @session_blueprint.route('/tickets/<int:session_id>', methods=['GET'])
+@jwt_required
 def get_tickets_session(session_id):
+    res = check_manager_or_admin_auth()
+    if res is not None:
+        return res
     tickets = db.session.query(Tickets).filter_by(sessionId=session_id).all()
-    if tickets is None:
-        return jsonify({'error': 'Session not found'}), 404
+
+    if len(tickets) == 0:
+        return jsonify({'error': 'Tickets not found'}), 404
+
     res = []
     for ticket in tickets:
         res_json = {'id': ticket.id,

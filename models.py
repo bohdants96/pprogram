@@ -76,7 +76,7 @@ class Sessions(BaseModel):
     __tablename__ = "sessions"
 
     id = Column(Integer, Identity(start=1, cycle=False), primary_key=True)
-    startTime = Column(DateTime, server_default=func.now())
+    startTime = Column(Time, server_default="10:00:00")
     filmId = Column(Integer, ForeignKey('films.id'))
     roomId = Column(Integer, ForeignKey('rooms.id'))
     pricePerTicket = Column(Float)

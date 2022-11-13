@@ -11,7 +11,11 @@ psycopg2-binary = "*"
 alembic = "*"
 marshmallow = "*"
 flask-bcrypt = "*"
-
+flask-jwt = "*"
+flask-jwt-extended = "*"
+Werkzeug = "*"
+flask-login = "*"
+redis = "*"
 [dev-packages]
 
 [requires]

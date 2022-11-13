@@ -1,16 +1,22 @@
 from flask import Blueprint, jsonify, request
 from marshmallow import Schema, fields, ValidationError, validate
 from flask_bcrypt import Bcrypt
-from pprogram.models import Schedules, schedule_session, Sessions, Tickets
-import pprogram.app.db as db
+from models import Schedules, schedule_session, Sessions, Tickets
+import app.db as db
 import datetime
+from app.auth import check_admin_auth, check_manager_or_admin_auth
+from flask_jwt_extended import jwt_required
 
 schedule_blueprint = Blueprint('schedule', __name__, url_prefix='/schedule')
 bcrypt = Bcrypt()
 
 
 @schedule_blueprint.route('', methods=['POST'])
+@jwt_required
 def create_schedule():
+    res = check_admin_auth()
+    if res is not None:
+        return res
     try:
         class ScheduleToCreate(Schema):
             date = fields.Date(required=True)
@@ -65,7 +71,11 @@ def get_schedule(schedule_id):
 
 
 @schedule_blueprint.route('/<string:date>', methods=['POST'])
+@jwt_required
 def create_schedule_date(date):
+    res = check_admin_auth()
+    if res is not None:
+        return res
     try:
         class ScheduleToCreate(Schema):
             sessions = fields.List(fields.Integer())
@@ -100,7 +110,11 @@ def create_schedule_date(date):
 
 
 @schedule_blueprint.route('/<string:date>', methods=['PUT'])
+@jwt_required
 def update_schedule(date):
+    res = check_admin_auth()
+    if res is not None:
+        return res
     try:
         class ScheduleToUpdate(Schema):
             sessions = fields.List(fields.Integer())
@@ -138,7 +152,11 @@ def update_schedule(date):
 
 
 @schedule_blueprint.route('/<string:date>', methods=['DELETE'])
+@jwt_required
 def delete_schedule(date):
+    res = check_admin_auth()
+    if res is not None:
+        return res
     schedules = db.session.query(Schedules).filter(date == date).all()
     if schedules is None:
         return jsonify({'error': 'Session not found'}), 404
@@ -181,32 +199,26 @@ def get_schedule_date(date):
     return jsonify(res_json), 200
 
 
-# to rewrite
-@schedule_blueprint.route('/tickets/<string:date>', methods=['GET'])
-def get_tickets_session(date):
-    schedule = db.session.query(Schedules).filter(Schedules.date==date).first()
-    if schedule is None:
-        return jsonify({'error': 'Schedule not found'}), 404
-    res_j = []
-    sessions = db.session.query(schedule_session).filter_by(scheduleId=schedule.id).all()
-    if len(sessions) == 0:
-        return jsonify({'error': 'Sessions not found'}), 404
-    for session in sessions:
-        tickets = db.session.query(Tickets).filter_by(sessionId=session.id).all()
-        if tickets is None:
-            return jsonify({'error': 'Session not found'}), 404
-        res = []
-        for ticket in tickets:
-            res_json = {'id': ticket.id,
-                        'userId': ticket.userId,
-                        'sessionId': ticket.sessionId,
-                        'seatNum': ticket.seatNum,
-                        'date': ticket.date
-                        }
-            res.append(jsonify(res_json))
-        res_i = {
-            "tickets": jsonify(res)
-        }
-        res_j.append(res_i)
+@schedule_blueprint.route('/<string:date>/tickets', methods=['GET'])
+@jwt_required
+def get_tickets_date(date):
+    res = check_manager_or_admin_auth()
+    if res is not None:
+        return res
+    tickets = db.session.query(Tickets).filter(Tickets.date == date).all()
+    if tickets is None:
+        return jsonify({'error': 'Tickets not found'}), 404
+    res = []
+    for ticket in tickets:
+        res_json = {'id': ticket.id,
+                    'userId': ticket.userId,
+                    'sessionId': ticket.sessionId,
+                    'seatNum': ticket.seatNum,
+                    'date': ticket.date
+                    }
+        res.append(res_json)
+    res_i = {
+        "tickets": res
+    }
 
-    return jsonify(res_j), 200
+    return jsonify(res_i), 200

@@ -1,11 +1,23 @@
 from flask import Blueprint, jsonify, request
-from marshmallow import Schema, fields, ValidationError,validate
-from flask_bcrypt import Bcrypt
-from pprogram.models import Users, Tickets, Sessions
-import pprogram.app.db as db
+from marshmallow import Schema, fields, ValidationError, validate
+from flask_bcrypt import Bcrypt, check_password_hash, generate_password_hash
+from models import Users, Tickets, Sessions
+from flask_jwt import current_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token, get_jti
+import app.db as db
+from app.auth import check_admin_auth, check_manager_or_admin_auth, user_check_auth
+
+from datetime import timedelta
+import redis
 
 user_blueprint = Blueprint('user', __name__, url_prefix='/user')
 bcrypt = Bcrypt()
+
+ACCESS_EXPIRES = timedelta(hours=1)
+
+jwt_redis_blocklist = redis.StrictRedis(
+    host="localhost", port=5000, db=0, decode_responses=True
+)
 
 
 @user_blueprint.route('', methods=['POST'])
@@ -24,9 +36,9 @@ def create_user():
     except ValidationError as err:
         return jsonify(err.messages), 400
     users = db.session.query(Users).filter_by(userName=request.json['userName']).all()
-    if len(users)> 0:
+    if len(users) > 0:
         return jsonify({"message": "Username is used"}), 400
-    if len(request.json['password'])<8:
+    if len(request.json['password']) < 8:
         return jsonify({"message": "Password is too short"}), 400
     user = Users(userName=request.json['userName'], firstName=request.json['firstName'],
                  lastName=request.json['lastName'], email=request.json['email'],
@@ -42,11 +54,13 @@ def create_user():
 
 
 @user_blueprint.route('/<int:user_id>', methods=['GET'])
+@jwt_required
 def get_user(user_id):
-    user = db.session.query(Users).filter_by(id=user_id).first()
-    if user is None:
-        return jsonify({'error': 'User not found'}), 404
+    res = user_check_auth(user_id)
+    if res is not None:
+        return res
 
+    user = db.session.query(Users).filter_by(id=user_id).first()
     res_json = {'id': user.id,
                 'email': user.email,
                 'username': user.userName,
@@ -57,7 +71,12 @@ def get_user(user_id):
 
 
 @user_blueprint.route('/<int:user_id>', methods=['PUT'])
+@jwt_required
 def update_user(user_id):
+    res = user_check_auth(user_id)
+    if res is not None:
+        return res
+
     try:
         class UserToUpdate(Schema):
             userName = fields.String()
@@ -106,7 +125,12 @@ def update_user(user_id):
 
 
 @user_blueprint.route('/<int:user_id>', methods=['DELETE'])
+@jwt_required
 def delete_user(user_id):
+    res = user_check_auth(user_id)
+    if res is not None:
+        return res
+
     user = db.session.query(Users).filter_by(id=user_id).first()
     if user is None:
         return jsonify({'error': 'User not found'}), 404
@@ -124,16 +148,34 @@ def delete_user(user_id):
 
 @user_blueprint.route('/login', methods=['POST'])
 def login():
-    return jsonify("not implemented")
+    auth = request.authorization
+
+    if not auth or not auth.username or not auth.password:
+        return jsonify({'error': 'Could not verify user'}), 401
+
+    user = db.session.query(Users).filter(Users.userName == auth.username).first()
+
+    if user is not None and check_password_hash(user.password, auth.password):
+        access_token = create_access_token(identity=user.userName)
+        return jsonify({'token': access_token}), 200
+
+    return jsonify({'error': 'Could not verify user'}), 401
 
 
 @user_blueprint.route('/logout', methods=['GET'])
+@jwt_required
 def logout():
-    return jsonify("not implemented")
+    jti = get_jti(request.headers.get('Authorization', None).split()[1])
+    #jwt_redis_blocklist.set(jti, "", ex=ACCESS_EXPIRES)
+    return jsonify(msg="Access token revoked")
 
 
 @user_blueprint.route('/sell', methods=['POST'])
+@jwt_required
 def sell():
+    res = check_manager_or_admin_auth()
+    if res is not None:
+        return res
     try:
         class TicketToCreate(Schema):
             userId = fields.Integer(required=True)
@@ -150,19 +192,36 @@ def sell():
     session = db.session.query(Sessions).filter_by(id=request.json['sessionId']).first()
     if session is None:
         return jsonify({'error': 'Session not found'}), 404
-    ticket = Tickets(userId=request.json['userId'],sessionId=request.json['sessionId'],
-                     seatNum=request.json['seatNum'],date=request.json['date'])
+    ticket = Tickets(userId=request.json['userId'], sessionId=request.json['sessionId'],
+                     seatNum=request.json['seatNum'], date=request.json['date'])
     try:
         db.session.add(ticket)
     except:
         db.session.rollback()
         return jsonify({"message": "Error ticket create"}), 500
     db.session.commit()
-    return get_tickets(ticket.userId)
+
+    ticket = db.session.query(Tickets).filter_by(id=ticket.id).first()
+    res = {'id': ticket.id,
+           'userId': ticket.userId,
+           'sessionId': ticket.sessionId,
+           'seatNum': ticket.seatNum,
+           'date': ticket.date}
+
+    return jsonify(res), 200
 
 
 @user_blueprint.route('/<int:user_id>/tickets', methods=['GET'])
+@jwt_required
 def get_tickets(user_id):
+    res = user_check_auth(user_id)
+    if res is not None:
+        return res
+
+    user = db.session.query(Users).filter_by(id=user_id).first()
+    if user is None:
+        return jsonify({'error': 'User not found'}), 404
+
     tickets = db.session.query(Tickets).filter_by(userId=user_id).all()
     if tickets is None:
         return jsonify({'error': 'User not found'}), 404
@@ -177,4 +236,3 @@ def get_tickets(user_id):
         res.append(res_json)
 
     return jsonify(res), 200
-
