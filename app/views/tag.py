@@ -13,7 +13,9 @@ bcrypt = Bcrypt()
 @tag_blueprint.route('', methods=['POST'])
 @jwt_required
 def create_tag():
-    check_admin_auth()
+    res = check_admin_auth()
+    if res is not None:
+        return res
     try:
         class TagToCreate(Schema):
             name = fields.String(required=True)

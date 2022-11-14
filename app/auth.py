@@ -29,5 +29,18 @@ def user_check_auth(user_id):
     if user is None:
         return jsonify({'error': 'User not found'}), 404
 
+    if user.userName != userA.userName:
+        return jsonify({'error': 'Access is denied'}), 403
+
+
+def user_manager_admin_check_auth(user_id):
+    current_identity_username = get_jwt_identity()
+    userA = db.session.query(Users).filter_by(userName=current_identity_username).first()
+
+    user = db.session.query(Users).filter_by(id=user_id).first()
+
+    if user is None:
+        return jsonify({'error': 'User not found'}), 404
+
     if user.userName != userA.userName and userA.userStatus == 0:
         return jsonify({'error': 'Access is denied'}), 403

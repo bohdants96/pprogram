@@ -5,7 +5,7 @@ from models import Users, Tickets, Sessions
 from flask_jwt import current_identity
 from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token, get_jti
 import app.db as db
-from app.auth import check_admin_auth, check_manager_or_admin_auth, user_check_auth
+from app.auth import check_admin_auth, check_manager_or_admin_auth, user_manager_admin_check_auth, user_check_auth
 
 from datetime import timedelta
 import redis
@@ -50,13 +50,21 @@ def create_user():
         db.session.rollback()
         return jsonify({"message": "Error user create"}), 500
     db.session.commit()
-    return get_user(user.id)
+
+    user = db.session.query(Users).filter_by(id=user.id).first()
+    res_json = {'id': user.id,
+                'email': user.email,
+                'username': user.userName,
+                'firstName': user.firstName,
+                'lastName': user.lastName}
+
+    return jsonify(res_json), 200
 
 
 @user_blueprint.route('/<int:user_id>', methods=['GET'])
 @jwt_required
 def get_user(user_id):
-    res = user_check_auth(user_id)
+    res = user_manager_admin_check_auth(user_id)
     if res is not None:
         return res
 
@@ -93,9 +101,16 @@ def update_user(user_id):
         return jsonify(err.messages), 400
 
     user1 = db.session.query(Users).filter_by(id=user_id).all()
-    users = db.session.query(Users).filter_by(userName=request.json['userName']).all()
-    if len(users)> 0 and users[0].id != user_id:
-        return jsonify({"message": "Username is used"}), 400
+
+    username = None
+    try:
+        username = request.json['userName']
+    except:
+        None
+    if username is not None:
+        users = db.session.query(Users).filter_by(userName=username).all()
+        if len(users)> 0 and users[0].id != user_id:
+            return jsonify({"message": "Username is used"}), 400
 
     user = db.session.query(Users).filter(Users.id == user_id).first()
 
@@ -156,7 +171,7 @@ def login():
     user = db.session.query(Users).filter(Users.userName == auth.username).first()
 
     if user is not None and check_password_hash(user.password, auth.password):
-        access_token = create_access_token(identity=user.userName)
+        access_token = create_access_token(identity=user.userName, expires_delta=timedelta(days=2))
         return jsonify({'token': access_token}), 200
 
     return jsonify({'error': 'Could not verify user'}), 401
@@ -214,7 +229,7 @@ def sell():
 @user_blueprint.route('/<int:user_id>/tickets', methods=['GET'])
 @jwt_required
 def get_tickets(user_id):
-    res = user_check_auth(user_id)
+    res = user_manager_admin_check_auth(user_id)
     if res is not None:
         return res
 

@@ -112,6 +112,13 @@ def get_film_by_status(film_status):
     if res is not None:
         return res
     res = []
+
+    try:
+        validator = validate.OneOf(["incoming", "in rent", "out of date"])
+        validator(film_status)
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+
     films = db.session.query(Films).filter_by(status=film_status).all()
     if films is None:
         return jsonify({'error': 'Films not found'}), 404
