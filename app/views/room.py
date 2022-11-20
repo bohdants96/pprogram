@@ -1,16 +1,22 @@
 from flask import Blueprint, jsonify, request
 from marshmallow import Schema, fields, ValidationError, validate
 from flask_bcrypt import Bcrypt
-from pprogram.models import Rooms
-import pprogram.app.db as db
-import pprogram.app.views.tag as tg
+from models import Rooms
+import app.db as db
+import app.views.tag as tg
+from app.auth import check_manager_or_admin_auth, check_admin_auth
+from flask_jwt_extended import jwt_required
 
 room_blueprint = Blueprint('room', __name__, url_prefix='/room')
 bcrypt = Bcrypt()
 
 
-@room_blueprint.route('',methods=['POST'])
+@room_blueprint.route('', methods=['POST'])
+@jwt_required
 def create_room():
+    res = check_admin_auth()
+    if res is not None:
+        return res
     try:
         class RoomToCreate(Schema):
             name = fields.String(required=True)
@@ -18,7 +24,7 @@ def create_room():
         RoomToCreate().load(request.json)
     except ValidationError as err:
         return jsonify(err.messages), 400
-    if request.json['numOfSeats']<0:
+    if request.json['numOfSeats'] < 0:
         return ({"message": "numOfSeats < 0"}), 400
     room = Rooms(name=request.json['name'], numOfSeats=request.json['numOfSeats'])
 
@@ -32,7 +38,11 @@ def create_room():
 
 
 @room_blueprint.route('/<int:room_id>', methods=['GET'])
+@jwt_required
 def get_room(room_id):
+    res = check_manager_or_admin_auth()
+    if res is not None:
+        return res
     room = db.session.query(Rooms).filter_by(id=room_id).first()
     if room is None:
         return jsonify({'error': 'User not found'}), 404
@@ -45,8 +55,12 @@ def get_room(room_id):
     return jsonify(res_json), 200
 
 
-@room_blueprint.route('/<int:room_id>',methods=['DELETE'])
+@room_blueprint.route('/<int:room_id>', methods=['DELETE'])
+@jwt_required
 def delete_room(room_id):
+    res = check_admin_auth()
+    if res is not None:
+        return res
     room = db.session.query(Rooms).filter_by(id=room_id).first()
     if room is None:
         return jsonify({'error': 'Room not found'}), 404
@@ -61,8 +75,12 @@ def delete_room(room_id):
     return "", 204
 
 
-@room_blueprint.route('/<int:room_id>',methods=['PUT'])
+@room_blueprint.route('/<int:room_id>', methods=['PUT'])
+@jwt_required
 def update_room(room_id):
+    res = check_admin_auth()
+    if res is not None:
+        return res
     try:
         class RoomToUpdate(Schema):
             name = fields.String()

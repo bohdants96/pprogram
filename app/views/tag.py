@@ -1,15 +1,21 @@
 from flask import Blueprint, jsonify, request
 from marshmallow import Schema, fields, ValidationError
 from flask_bcrypt import Bcrypt
-from pprogram.models import Tags, FilmTag
-import pprogram.app.db as db
+from models import Tags, FilmTag
+import app.db as db
+from app.auth import check_admin_auth, check_manager_or_admin_auth
+from flask_jwt_extended import jwt_required
 
 tag_blueprint = Blueprint('tag', __name__, url_prefix='/tag')
 bcrypt = Bcrypt()
 
 
 @tag_blueprint.route('', methods=['POST'])
+@jwt_required
 def create_tag():
+    res = check_admin_auth()
+    if res is not None:
+        return res
     try:
         class TagToCreate(Schema):
             name = fields.String(required=True)
@@ -27,7 +33,11 @@ def create_tag():
 
 
 @tag_blueprint.route('/<int:tag_id>', methods=['GET'])
+@jwt_required
 def get_tag(tag_id):
+    res = check_manager_or_admin_auth()
+    if res is not None:
+        return res
     tag = db.session.query(Tags).filter_by(id=tag_id).first()
     if tag is None:
         return jsonify({'error': 'Tag not found'}), 404
@@ -40,7 +50,11 @@ def get_tag(tag_id):
 
 
 @tag_blueprint.route('/<int:tag_id>', methods=['PUT'])
+@jwt_required
 def update_tag(tag_id):
+    res = check_admin_auth()
+    if res is not None:
+        return res
     try:
         class TagToUpdate(Schema):
             name = fields.String(required=False)
@@ -69,7 +83,11 @@ def update_tag(tag_id):
 
 
 @tag_blueprint.route('/<int:tag_id>', methods=['DELETE'])
+@jwt_required
 def delete_tag(tag_id):
+    res = check_admin_auth()
+    if res is not None:
+        return res
     filmTags = db.session.query(FilmTag).filter_by(tagId=tag_id).all()
     tag = db.session.query(Tags).filter_by(id=tag_id).first()
     if tag is None:
