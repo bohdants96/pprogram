@@ -13,9 +13,14 @@ marshmallow = "*"
 flask-bcrypt = "*"
 flask-jwt = "*"
 flask-jwt-extended = "*"
-Werkzeug = "*"
+Werkzeug = "~=2.0.0"
 flask-login = "*"
 redis = "*"
+pytest = "*"
+pipenv = "*"
+coverage = "*"
+requests = "*"
+
 [dev-packages]
 
 [requires]

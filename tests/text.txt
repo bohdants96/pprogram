@@ -1,0 +1,49 @@
+#from models import BaseModel
+
+
+#BaseModel.metadata.create_all(engine)
+# class TestUser:
+#     def setup_method(self):
+#         self.user_customer= {
+#             "userName":"maxshu1",
+#             "firstName":"Max",
+#             "lastName":"Shurypa",
+#             "email":"maxshu@gmail.com",
+#             "password":"1234",
+#             "phone":"380671234567",
+#             "userStatus":0
+#         }      
+
+#         self.user_manager = {
+#             "userName":"maxshu1",
+#             "firstName":"Max",
+#             "lastName":"Shurypa",
+#             "email":"maxshu@gmail.com",
+#             "password":"1234",
+#             "phone":"380671234567",
+#             "userStatus":1
+#         } 
+
+#         self.user_admin= {
+#             "userName":"maxshu1",
+#             "firstName":"Max",
+#             "lastName":"Shurypa",
+#             "email":"maxshu@gmail.com",
+#             "password":"1234",
+#             "phone":"380671234567",
+#             "userStatus":2
+#         }
+
+# class TestCreateUser:        
+#     def test_create_user(self):
+#         user_customer = {
+#             "userName":"maxshu5",
+#             "firstName":"Max",
+#             "lastName":"Shurypa",
+#             "email":"maxshu@gmail.com",
+#             "password":"1337228s",
+#             "phone":"380671234567",
+#             "userStatus":3
+#         }      
+#         data = app.test_client().post('/user', json=user_customer)
+#         assert data.status_code == 200

@@ -44,11 +44,11 @@ def create_user():
                  lastName=request.json['lastName'], email=request.json['email'],
                  password=bcrypt.generate_password_hash(request.json['password']).decode('utf-8'),
                  phone=request.json['phone'], userStatus=request.json['userStatus'])
-    try:
-        db.session.add(user)
-    except:
-        db.session.rollback()
-        return jsonify({"message": "Error user create"}), 500
+    #try:
+    db.session.add(user)
+    # except:
+    #     db.session.rollback()
+    #     return jsonify({"message": "Error user create"}), 500
     db.session.commit()
 
     user = db.session.query(Users).filter_by(id=user.id).first()
@@ -94,8 +94,8 @@ def update_user(user_id):
             password = fields.String()
             phone = fields.Integer()
 
-        if not request.json:
-            raise ValidationError('No input data provided')
+        # if not request.json:
+        #     raise ValidationError('No input data provided')
         UserToUpdate().load(request.json)
     except ValidationError as err:
         return jsonify(err.messages), 400
@@ -103,10 +103,7 @@ def update_user(user_id):
     user1 = db.session.query(Users).filter_by(id=user_id).all()
 
     username = None
-    try:
-        username = request.json['userName']
-    except:
-        None
+    username = request.json['userName']
     if username is not None:
         users = db.session.query(Users).filter_by(userName=username).all()
         if len(users)> 0 and users[0].id != user_id:
@@ -117,26 +114,27 @@ def update_user(user_id):
     if user is None:
         return jsonify({'error': 'User does not exist'}), 404
 
-    try:
-        if 'userName' in request.json:
-            user.userName = request.json['userName']
-        if 'firstName' in request.json:
-            user.firstName = request.json['firstName']
-        if 'lastName' in request.json:
-            user.lastName = request.json['lastName']
-        if 'email' in request.json:
-            user.email = request.json['email']
-        if 'password' in request.json:
-            user.password = bcrypt.generate_password_hash(request.json['password']).decode('utf-8')
-        if 'phone' in request.json:
+    # try:
+    if 'userName' in request.json:
+        user.userName = request.json['userName']
+    if 'firstName' in request.json:
+        user.firstName = request.json['firstName']
+    if 'lastName' in request.json:
+        user.lastName = request.json['lastName']
+    if 'email' in request.json:
+        user.email = request.json['email']
+    if 'password' in request.json:
+        user.password = bcrypt.generate_password_hash(request.json['password']).decode('utf-8')
+    if 'phone' in request.json:
             user.phone = request.json['phone']
-    except:
-        db.session.rollback()
-        return jsonify({"User Data is not valid"}), 400
+    # except:
+    #     db.session.rollback()
+    #     return jsonify({"User Data is not valid"}), 400
 
     db.session.commit()
 
-    return get_user(user_id)
+    #return get_user(user_id)
+    return jsonify({"message":"User was updated"}), 200
 
 
 @user_blueprint.route('/<int:user_id>', methods=['DELETE'])
@@ -150,28 +148,34 @@ def delete_user(user_id):
     if user is None:
         return jsonify({'error': 'User not found'}), 404
 
-    try:
-        db.session.delete(user)
-    except:
-        db.session.rollback()
-        return jsonify({"User data is not valid"}), 400
+    # try:
+    db.session.delete(user)
+    # except:
+    #     db.session.rollback()
+    #     return jsonify({"User data is not valid"}), 400
 
     db.session.commit()
 
-    return "", 204
+    return jsonify({"message":"User was deleted"}), 200
 
 
 @user_blueprint.route('/login', methods=['POST'])
 def login():
-    auth = request.authorization
+    try:
+        class UserToLogin(Schema):
+            username = fields.String(required=True)
+            password = fields.String(required=True)
+        user = UserToLogin().load(request.json)
+    except ValidationError as err:
+        return jsonify(err.messages), 400
 
-    if not auth or not auth.username or not auth.password:
-        return jsonify({'error': 'Could not verify user'}), 401
+    user_db = db.session.query(Users).filter(Users.userName == user['username']).first()
 
-    user = db.session.query(Users).filter(Users.userName == auth.username).first()
+    if user_db is None:
+        return jsonify({'error': 'User not found'}), 401
 
-    if user is not None and check_password_hash(user.password, auth.password):
-        access_token = create_access_token(identity=user.userName, expires_delta=timedelta(days=2))
+    if user is not None and check_password_hash(user_db.password, user['password']):
+        access_token = create_access_token(identity=user_db.userName, expires_delta=timedelta(days=2))
         return jsonify({'token': access_token}), 200
 
     return jsonify({'error': 'Could not verify user'}), 401
@@ -209,11 +213,11 @@ def sell():
         return jsonify({'error': 'Session not found'}), 404
     ticket = Tickets(userId=request.json['userId'], sessionId=request.json['sessionId'],
                      seatNum=request.json['seatNum'], date=request.json['date'])
-    try:
-        db.session.add(ticket)
-    except:
-        db.session.rollback()
-        return jsonify({"message": "Error ticket create"}), 500
+    #try:
+    db.session.add(ticket)
+    # except:
+    #     db.session.rollback()
+    #     return jsonify({"message": "Error ticket create"}), 500
     db.session.commit()
 
     ticket = db.session.query(Tickets).filter_by(id=ticket.id).first()
@@ -224,6 +228,7 @@ def sell():
            'date': ticket.date}
 
     return jsonify(res), 200
+
 
 
 @user_blueprint.route('/<int:user_id>/tickets', methods=['GET'])

@@ -28,11 +28,11 @@ def create_room():
         return ({"message": "numOfSeats < 0"}), 400
     room = Rooms(name=request.json['name'], numOfSeats=request.json['numOfSeats'])
 
-    try:
-        db.session.add(room)
-    except:
-        db.session.rollback()
-        return jsonify({"message": "Error room create"}), 500
+    # try:
+    db.session.add(room)
+    # except:
+        # db.session.rollback()
+        # return jsonify({"message": "Error room create"}), 500
     db.session.commit()
     return get_room(room.id)
 
@@ -64,11 +64,11 @@ def delete_room(room_id):
     room = db.session.query(Rooms).filter_by(id=room_id).first()
     if room is None:
         return jsonify({'error': 'Room not found'}), 404
-    try:
-        db.session.delete(room)
-    except:
-        db.session.rollback()
-        return jsonify({"Film data is not valid"}), 400
+    # try:
+    db.session.delete(room)
+    # except:
+    #     db.session.rollback()
+    #     return jsonify({"Film data is not valid"}), 400
 
     db.session.commit()
 
@@ -99,14 +99,14 @@ def update_room(room_id):
     if room is None:
         return jsonify({'error': 'Room does not exist'}), 404
 
-    try:
-        if 'name' in request.json:
-            room.name = request.json['name']
-        if 'numOfSeats' in request.json:
-            room.numOfSeats = request.json['numOfSeats']
-    except:
-        db.session.rollback()
-        return jsonify({"User Data is not valid"}), 400
+    # try:
+    if 'name' in request.json:
+        room.name = request.json['name']
+    if 'numOfSeats' in request.json:
+        room.numOfSeats = request.json['numOfSeats']
+    # except:
+    #     db.session.rollback()
+    #     return jsonify({"User Data is not valid"}), 400
 
     db.session.commit()
 

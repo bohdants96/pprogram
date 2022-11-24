@@ -23,11 +23,7 @@ def create_tag():
     except ValidationError as err:
         return jsonify(err.messages), 400
     tag = Tags(name=request.json['name'])
-    try:
-        db.session.add(tag)
-    except:
-        db.session.rollback()
-        return jsonify({"message": "Error tag create"}), 500
+    db.session.add(tag)
     db.session.commit()
     return get_tag(tag.id)
 
@@ -58,9 +54,6 @@ def update_tag(tag_id):
     try:
         class TagToUpdate(Schema):
             name = fields.String(required=False)
-
-        if not request.json:
-            raise ValidationError('No input data provided')
         TagToUpdate().load(request.json)
     except ValidationError as err:
         return jsonify(err.messages), 400
@@ -70,12 +63,10 @@ def update_tag(tag_id):
     if tag is None:
         return jsonify({'error': 'Tag does not exist'}), 404
 
-    try:
-        if 'name' in request.json:
-            tag.name = request.json['name']
-    except:
-        db.session.rollback()
-        return jsonify({"Tag Data is not valid"}), 400
+
+    if 'name' in request.json:
+        tag.name = request.json['name']
+
 
     db.session.commit()
 
@@ -93,14 +84,11 @@ def delete_tag(tag_id):
     if tag is None:
         return jsonify({'error': 'Tag not found'}), 404
 
-    try:
-        for filmTag in filmTags:
-            db.session.delete(filmTag)
-        db.session.delete(tag)
-    except:
-        db.session.rollback()
-        return jsonify({"Tag data is not valid"}), 400
+    for filmTag in filmTags:
+        db.session.delete(filmTag)
+    db.session.delete(tag)
+
 
     db.session.commit()
 
-    return "", 204
+    return jsonify({'msg': 'Tag was deleted'}), 204
