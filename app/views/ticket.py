@@ -20,12 +20,7 @@ def delete_ticket(ticket_id):
     if ticket is None:
         return jsonify({'error': 'Ticket not found'}), 404
 
-    try:
-        db.session.delete(ticket)
-    except:
-        db.session.rollback()
-        return jsonify({"Ticket data is not valid"}), 400
-
+    db.session.delete(ticket)
     db.session.commit()
 
     return "", 204

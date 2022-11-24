@@ -2,10 +2,11 @@ import os
 from sqlalchemy import *
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
-engine = create_engine("postgresql://postgres:p30062003@localhost:5432/cinema")
+engine = create_engine("postgresql://postgres:postgres22@localhost:5432/cinema")
 
 Session = sessionmaker(bind=engine)
 BaseModel = declarative_base()
+session = Session()
 
 #FilmTag = Table('FilmsTags',
  #               BaseModel.metadata,

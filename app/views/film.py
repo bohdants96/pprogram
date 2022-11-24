@@ -38,11 +38,8 @@ def create_film():
         if tag is None:
             return jsonify({'error': 'Tag not found'}), 404
 
-    try:
-        db.session.add(film)
-    except:
-        db.session.rollback()
-        return jsonify({"message": "Error film create"}),500
+    db.session.add(film)
+
     db.session.commit()
 
     for i in range(len(request.json['tags'])):
@@ -51,11 +48,8 @@ def create_film():
         tag = db.session.query(Tags).filter_by(id=tagsId[i]).first()
         filmTag = FilmTag(filmId=film.id, tagId=tagsId[i])
 
-        try:
-            db.session.add(filmTag)
-        except:
-            db.session.rollback()
-            return jsonify({"message": "Error filmTag create"}),500
+        db.session.add(filmTag)
+
     db.session.commit()
     return get_film(film.id)
     # return jsonify(len(request.json['tags']))
@@ -92,13 +86,12 @@ def delete_film(film_id):
     filmTags = db.session.query(FilmTag).filter_by(filmId=film_id).all()
     if filmTags is None:
         return jsonify({'error': 'Film`s tags not found'}), 404
-    try:
-        for filmTag in filmTags:
-            db.session.delete(filmTag)
-        db.session.delete(film)
-    except:
-        db.session.rollback()
-        return jsonify({"Film data is not valid"}), 400
+    for filmTag in filmTags:
+        db.session.delete(filmTag)
+    db.session.delete(film)
+    # except:
+    #     db.session.rollback()
+    #     return jsonify({"Film data is not valid"}), 400
 
     db.session.commit()
 
@@ -183,18 +176,18 @@ def update_film(film_id):
     if film is None:
         return jsonify({'error': 'User does not exist'}), 404
 
-    try:
-        if 'name' in request.json:
-            film.name = request.json['name']
-        if 'duration' in request.json:
-            film.duration = request.json['duration']
-        if 'status' in request.json:
-            film.status = request.json['status']
-        db.session.commit()
+    # try:
+    if 'name' in request.json:
+        film.name = request.json['name']
+    if 'duration' in request.json:
+        film.duration = request.json['duration']
+    if 'status' in request.json:
+        film.status = request.json['status']
+    db.session.commit()
 
-    except:
-        db.session.rollback()
-        return jsonify({"Film Data is not valid"}), 400
+    # except:
+    #     db.session.rollback()
+    #     return jsonify({"Film Data is not valid"}), 400
 
     db.session.commit()
 

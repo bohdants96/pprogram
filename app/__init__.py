@@ -1,8 +1,8 @@
 from flask import Flask
 from flask_jwt_extended import JWTManager
 
-app = Flask(__name__)
 
+app = Flask(__name__)
 from app.views import user
 from app.views import tag
 from app.views import film

@@ -26,11 +26,11 @@ def create_schedule():
     except ValidationError as err:
         return jsonify(err.messages), 400
     schedule = Schedules(date=request.json['date'])
-    try:
-        db.session.add(schedule)
-    except:
-        db.session.rollback()
-        return jsonify({"message": "Error schedule create"}), 500
+    #try:
+    db.session.add(schedule)
+    # except:
+    #     db.session.rollback()
+    #     return jsonify({"message": "Error schedule create"}), 500
     db.session.commit()
     sessionId = []
     for i in range(len(request.json['sessions'])):
@@ -40,11 +40,8 @@ def create_schedule():
         if sessions is None:
             return jsonify({'error': 'sessions not found'}), 404
         scheduleSession = schedule_session(scheduleId=schedule.id, sessionId=sessionId[i])
-        try:
-            db.session.add(scheduleSession)
-        except:
-            db.session.rollback()
-            return jsonify({"message": "Error scheduleSession create"}), 500
+        db.session.add(scheduleSession)
+
     db.session.commit()
     return get_schedule(schedule.id)
 
@@ -85,11 +82,8 @@ def create_schedule_date(date):
         return jsonify(err.messages), 400
 
     schedule = Schedules(date=date)
-    try:
-        db.session.add(schedule)
-    except:
-        db.session.rollback()
-        return jsonify({"message": "Error schedule create"}), 500
+    db.session.add(schedule)
+
     db.session.commit()
     sessionId = []
     for i in range(len(request.json['sessions'])):
@@ -100,11 +94,8 @@ def create_schedule_date(date):
             delete_schedule(date)
             return jsonify({'error': 'sessions not found'}), 404
         scheduleSession = schedule_session(scheduleId=schedule.id, sessionId=sessionId[i])
-        try:
-            db.session.add(scheduleSession)
-        except:
-            db.session.rollback()
-            return jsonify({"message": "Error scheduleSession create"}), 500
+        db.session.add(scheduleSession)
+
     db.session.commit()
     return get_schedule(schedule.id)
 
@@ -119,8 +110,6 @@ def update_schedule(date):
         class ScheduleToUpdate(Schema):
             sessions = fields.List(fields.Integer())
 
-        if not request.json:
-            raise ValidationError('No input data provided')
         ScheduleToUpdate().load(request.json)
     except ValidationError as err:
         return jsonify(err.messages), 400
@@ -143,7 +132,6 @@ def update_schedule(date):
                 scheduleSession = schedule_session(scheduleId=schedule.id, sessionId=sessionId[i])
                 db.session.add(scheduleSession)
     except:
-        db.session.rollback()
         return jsonify({"Schedule Data is not valid"}), 400
 
     db.session.commit()
@@ -164,14 +152,10 @@ def delete_schedule(date):
         schedule_s = db.session.query(schedule_session).filter_by(scheduleId=schedule.id).all()
         if schedule_s is None:
             return jsonify({'error': 'Film`s tags not found'}), 404
-        try:
-            for schedule_ss in schedule_s:
-                db.session.delete(schedule_ss)
-            db.session.commit()
-            db.session.delete(schedule)
-        except:
-            db.session.rollback()
-            return jsonify({"Session data is not valid"}), 400
+        for schedule_ss in schedule_s:
+            db.session.delete(schedule_ss)
+        db.session.commit()
+        db.session.delete(schedule)
 
         db.session.commit()
 

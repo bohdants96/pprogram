@@ -38,11 +38,11 @@ def create_session():
         return jsonify({'error': 'Room not found'}), 404
     session = Sessions(startTime=request.json['startTime'], filmId=request.json['filmId'],
                        roomId=request.json['roomId'], pricePerTicket=request.json['pricePerTicket'])
-    try:
-        db.session.add(session)
-    except:
-        db.session.rollback()
-        return jsonify({"message": "Error session create"}), 500
+    #try:
+    db.session.add(session)
+    # except:
+    #     db.session.rollback()
+    #     return jsonify({"message": "Error session create"}), 500
     db.session.commit()
     return get_session(session.id)
 
@@ -81,8 +81,6 @@ def update_session(session_id):
             roomId = fields.Integer()
             pricePerTicket = fields.Integer()
 
-        if not request.json:
-            raise ValidationError('No input data provided')
         SessionToUpdate().load(request.json)
     except ValidationError as err:
         return jsonify(err.messages), 400
@@ -97,19 +95,19 @@ def update_session(session_id):
     room = db.session.query(Rooms).filter_by(id=request.json['roomId']).first()
     if room is None:
         return jsonify({'error': 'Room not found'}), 404
-    try:
-        if 'startTime' in request.json:
-            session.startTime = request.json['startTime']
-        if 'filmId' in request.json:
-            session.filmId = request.json['filmId']
-        if 'roomId' in request.json:
-            session.roomId = request.json['roomId']
-        if 'pricePerTicket' in request.json:
-            session.pricePerTicket = request.json['pricePerTicket']
+    # try:
+    if 'startTime' in request.json:
+        session.startTime = request.json['startTime']
+    if 'filmId' in request.json:
+        session.filmId = request.json['filmId']
+    if 'roomId' in request.json:
+        session.roomId = request.json['roomId']
+    if 'pricePerTicket' in request.json:
+        session.pricePerTicket = request.json['pricePerTicket']
 
-    except:
-        db.session.rollback()
-        return jsonify({"Session Data is not valid"}), 400
+    # except:
+    #     db.session.rollback()
+    #     return jsonify({"Session Data is not valid"}), 400
 
     db.session.commit()
 
@@ -126,11 +124,11 @@ def delete_session(session_id):
     if session is None:
         return jsonify({'error': 'Session not found'}), 404
 
-    try:
-        db.session.delete(session)
-    except:
-        db.session.rollback()
-        return jsonify({"Session data is not valid"}), 400
+    # try:
+    db.session.delete(session)
+    # except:
+    #     db.session.rollback()
+    #     return jsonify({"Session data is not valid"}), 400
 
     db.session.commit()
 
